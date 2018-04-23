@@ -1,5 +1,5 @@
-var scene, camera, renderer, stats;
-var plane, displacement, uniforms, geometry, circle, circle2;
+var scene, camera, renderer, stats, bufferTexture, bufferScene;
+var plane, displacement, uniforms, geometry, circle, circle2, bufferPlane;
 var fov = 30,
     isUserInteracting = false,
     cameraDistance = 80,
@@ -7,8 +7,6 @@ var fov = 30,
     lon = 0, onMouseDownLon = 0,
     lat = 0, onMouseDownLat = 0,
     phi = 0, theta = 0;
-var A, B;
-var canvasbox;
 var circle_lifetime = 10000;
 var waveArray = [];
 var numWaves = 0;
@@ -64,17 +62,36 @@ function decTime() {
 function init() {
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color( 0x146bb7 );
+  scene.background = new THREE.Color( 0x0d8cc6 );
 
-  camera = new THREE.PerspectiveCamera( fov, 3, 1, 1000 );
-  camera.position.set( 0, 0, 97.5 ); //97.5
-  camera.lookAt(scene.position);
+  crossScene = new THREE.Scene();
 
   renderer = new THREE.WebGLRenderer({antialias:true});
   let width = $('#container').outerWidth();
   renderer.setSize( width, width/3 );
-  canvasbox = renderer.domElement;
   $('#container').append( renderer.domElement );
+
+  crossrenderer = new THREE.WebGLRenderer({antialias:true});
+  crossrenderer.setSize( width, width/8 );
+  $('#cross-section').append( crossrenderer.domElement );
+
+  camera = new THREE.OrthographicCamera( width / - 2,
+  width / 2,
+  width / 6,
+  width / - 6, -10000, 10000 );
+
+  bufferScene = new THREE.Scene();
+
+  var renderTargetParams = {
+    minFilter:THREE.LinearFilter,
+    stencilBuffer:false,
+    depthBuffer:false
+  };
+
+  bufferTexture = new THREE.WebGLRenderTarget( width, width/3, renderTargetParams );
+
+  camera.zoom = width / 300; // 156 originally
+  camera.updateProjectionMatrix();
 
   waveArray = new Float32Array(64); // max 16 waves, each with (x position, y position, time, amplitude)
   numWaves = 0; // number of active waves
@@ -94,23 +111,41 @@ function init() {
     lights: true
   });
 
-  var light = new THREE.DirectionalLight(0xff0000);
-  light.position.set(0, 0, 1);
-  scene.add(light);
+  planeShader.depthTest = false;
 
   planeShader.transparent = true;
+  geometry = new THREE.PlaneBufferGeometry(300, 100, 300, 100); // 156, 52
 
-  geometry = new THREE.PlaneBufferGeometry(156, 52, 156, 52); // 156, 52
-
-  displacement = new Float32Array( geometry.attributes.position.count );
-
-  geometry.addAttribute( 'displacement', new THREE.BufferAttribute( displacement, 1 ) );
-
-  plane = new THREE.Mesh(
+  bufferPlane = new THREE.Mesh(
       geometry,
       planeShader
   );
-  scene.add( plane );
+  bufferScene.add( bufferPlane );
+
+  var waveMaterial = new THREE.MeshBasicMaterial({map:bufferTexture});
+  var waveGeometry = new THREE.PlaneGeometry( 300, 100, 4 );
+  var waveObject = new THREE.Mesh(waveGeometry, waveMaterial);
+  // Add it to the main scene
+  scene.add(waveObject);
+
+  var crossuniforms = {
+    texture1: { type: "t", value: bufferTexture }
+  };
+
+  var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+  scene.add( light );
+
+  var crossShader = new THREE.ShaderMaterial({
+      uniforms: crossuniforms,
+      vertexShader: document.getElementById('vertexshader').innerHTML,
+      fragmentShader:document.getElementById('fragmentshader-cross-texture').innerHTML
+  });
+
+  var crossPlane = new THREE.Mesh(
+      geometry,
+      crossShader
+  );
+  crossScene.add( crossPlane );
 
   $(window).on( 'resize', onWindowResize );
   $(renderer.domElement).click(function (e) { //Offset mouse Position
@@ -132,62 +167,17 @@ function animate() {
     requestAnimationFrame( animate );
 }
 
-// // var time = 0;
-// var CircleArray = []
-//
-// function animateWave() {
-//
-//   plane.geometry.attributes.displacement.needsUpdate = true;
-//
-//   for ( var i = 0; i < displ acement.length; i ++ ) {
-//         let vx = plane.geometry.attributes.position.getX(i);
-//         let vy = plane.geometry.attributes.position.getY(i);
-//         let displacement_array = [];
-//         CircleArray.forEach(function(circle) {
-//           displacement_array.push(circle.distance(vx, vy))
-//         });
-//         displacement[i] = displacement_array.reduce((a, b) => a + b, 0);
-// 			}
-// }
-//
-// class ExpandingCircle {
-//   constructor(x, y) {
-//     this.x = x;
-//     this.y = y;
-//     this.time = 0;
-//     this.speed = 0.00004; // 4
-//   }
-//
-//   distance(vx, vy, f) {
-//     this.time += this.speed;
-//     let dx = vx - this.x;
-//     let dy = vy - this.y;
-//     let width = 40;
-//     let separation = Math.hypot(dx, dy);
-//     let edge = this.time;
-//     if ((separation < edge) && ((edge - separation) < width)) {
-//       return (1-(edge - separation)/width) * Math.sin(separation - (edge))
-//     }
-//     else { return 0 }
-//   }
-//
-//   addTo(arr, time) {
-//    arr.push(this); //adding current instance to array
-//    setTimeout(function() { //setting timeout to remove it later
-//        arr.shift();
-//    }, time)
-//  }
-// }
-
 function render() {
-  renderer.render( scene, camera );
+  renderer.render(bufferScene, camera, bufferTexture);
+  renderer.render(scene, camera);
+  crossrenderer.render(bufferScene, camera, bufferTexture);
+  crossrenderer.render(crossScene, camera)
 }
 
 function onWindowClick (x, y) {
   $('#message').css('opacity', '0.0');
-  let sf = $('#container').outerWidth()/156 // scale factor for mouse location
+  let sf = $('#container').outerWidth()/300 // scale factor for mouse location
   addWave([x/sf, -y/sf, 300, 1]);
-  // new ExpandingCircle(x/sf, -y/sf).addTo(CircleArray, circle_lifetime)
 }
 
 function onWindowResize() {

@@ -197,6 +197,6 @@ function onWindowResize() {
   let height = $('#container').outerWidth()
   let top =  $('canvas').offset().top
   camera.updateProjectionMatrix();
-  renderer.setSize( width, height );
+  renderer.setSize( width, width/2 );
   // document.body.style.height = width/3 + top + 5;
 }
