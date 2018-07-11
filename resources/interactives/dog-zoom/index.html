@@ -4,16 +4,15 @@
     <script type='text/javascript' src="../../../resources/js/iframeResizer.contentWindow.js"></script>
     <link rel="stylesheet" type="text/css" media="all" href="../../css/tachyons.css"/>
     <style>
-    #buttons {
-      z-index: 4;
-      top: 89%;
-    }
+      .p-none {
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
     <div class="w-100 mw7 center bg-moon-gray">
       <div class="w-100 center sans-serif dark-gray overflow-hidden relative" id="container">
-        <div class="center w-100 z-3 bottom-0 absolute pa2 blue outline bg-white dt">
+        <div class="center w-100 z-2 bottom-0 absolute pa2 blue outline bg-white dt">
           <div class="f2 tc dtc label w-50 pr4 dim">
             <div class="f2 pointer blue no-underline dim ph3 code pv2 mb2 dib fr tc outline shaded" href="#0" onclick="increment(-1)" id="buttonminus">-</div>
           </div>
@@ -25,8 +24,8 @@
         <img src="images/new-images/hair.png" class="absolute w-100 z-1" id="hair">
         <img src="images/new-images/bacteria.png" class="absolute w-100 z-1" id="bacteria">
         <img src="images/new-images/atom.png" class="absolute w-100 z-1" id="atom">
-        <img src="images/new-images/glass.png" class="absolute w-100 z-2" id="glass">
-        <img src="images/new-images/glass.png" class="absolute w-100 z-2" id="glass-hidden">
+        <img src="images/new-images/glass.png" class="absolute w-100 z-3 p-none" id="glass">
+        <img src="images/new-images/glass.png" class="absolute w-100 z-3 p-none" id="glass-hidden">
         <img src="images/new-images/dog.png" class="relative w-100" id="dog">
       </div>
     </div>
