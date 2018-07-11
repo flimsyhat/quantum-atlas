@@ -16,7 +16,7 @@
           <div class="f2 tc dtc label w-50 pr4 dim">
             <div class="f2 pointer blue no-underline dim ph3 code pv2 mb2 dib fr tc outline shaded" href="#0" onclick="increment(-1)" id="buttonminus">-</div>
           </div>
-          <div class="f2 tc dtc v-mid" id="label">100,000x</div>
+          <div class="f2 tc dtc v-mid" id="label">1x</div>
           <div class="f2 tc dtc label w-50 pl4 dim">
             <div class="f2 pointer blue no-underline dim ph3 code pv2 mb2 dib fl tc outline shaded" href="#0" onclick="increment(1)" id="buttonplus">+</div>
           </div>
@@ -35,9 +35,10 @@
 
   TweenMax.set("#bacteria", {opacity: 0});
   TweenMax.set("#atom", {opacity: 0});
+  TweenMax.set("#hair", {opacity: 0});
   TweenMax.set("#glass-hidden", {x: -getWidth()})
 
-  let state = 1;
+  let state = 0;
   let disabled = {on: false};
   let tl = new TimelineMax();
 
@@ -107,5 +108,7 @@
   function modifyLabel(state) {
     document.getElementById("label").innerHTML = magnification[state];
   }
+
+  increment(0);
 
   </script>
